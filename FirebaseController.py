@@ -10,6 +10,7 @@ firebase_admin.initialize_app(cred, {
 
 db_ref = db
 
+
 def update_weather(data):
     global db
     weather_db = db.reference('weather/').get()

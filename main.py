@@ -1,23 +1,26 @@
 import pandas as pd
 import numpy as np
 import schedule
-from FirebaseController import db_ref as db, update_weather
+from FirebaseController import update_weather
 from DataGenerator import find_closest_row
+
 
 def load_data(filename, colums):
     global df
     df = pd.read_csv(filename, colums)
 
+
 def init_weather():
     global df
     return df.sample()
 
+
 def get_next_value():
     global ws, wd, prev_values, ASC
     print('----------------------------------------')
-    
+
     data = find_closest_row(df.copy(), ws, wd, prev_values, ASC)
-    
+
     if data is None:
         print('\n\n>> Change wind tendency <<', end='\n\n\n')
         ASC = not ASC
@@ -43,38 +46,39 @@ def get_next_value():
 
     print('Current Wind speed: ', ws)
     print('Current Wind direction: ', wd)
-    
+
     if np.random.choice([True, False], p=[0.2, 0.8]):
         ASC = not ASC
         _dir = 'UPWARDS' if ASC else 'DOWNWARDS'
         print(f'>> Wind tendency changed ({_dir}) <<')
-        
+
     # update weather Firebase real time database
     update_weather({
-        'wind_direction' : wd, # Local->wind_direction
-        'wind_speed' : ws, # Local->wind_speed
-        'wave_height' : wh, # Local->scale
-        'swell_height' : sh, # Swell->scale
-        'swell_direction' : sd, # Swell->wind_direction
+        'wind_direction': wd,  # Local->wind_direction
+        'wind_speed': ws,  # Local->wind_speed
+        'wave_height': wh,  # Local->scale
+        'swell_height': sh,  # Swell->scale
+        'swell_direction': sd,  # Swell->wind_direction
     })
 
 
-filename = 'Data/synthetic_data.csv'
-df = pd.read_csv(filename)
+if __name__ == '__main__':
+    filename = 'Data/synthetic_data.csv'
+    df = pd.read_csv(filename)
 
-row = init_weather()
+    row = init_weather()
 
-# Get the wind speed and direction values from the row
-ws = row['wind_speed'].values[0]
-wd = row['wind_direction_true'].values[0]
+    # Get the wind speed and direction values from the row
+    ws = row['wind_speed'].values[0]
+    wd = row['wind_direction_true'].values[0]
 
-print('Starting Wind speed: ', ws)
-print('Starting Wind direction: ', wd)
+    print('Starting Wind speed: ', ws)
+    print('Starting Wind direction: ', wd)
 
-prev_values = [(ws, wd)]  # add the index to prev_values
-ASC = True
+    prev_values = [(ws, wd)]  # add the index to prev_values
+    ASC = True
 
-schedule.every(2).seconds.do(get_next_value)
+    schedule.every(2).seconds.do(get_next_value)
 
-while True:
-    schedule.run_pending()
+    while True:
+        schedule.run_pending()
